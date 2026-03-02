@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SBSwipers</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #080808;
+    --white: #f0ede8;
+    --gray: #1a1a1a;
+    --gray2: #2a2a2a;
+    --accent: #c8b89a;
+    --text-muted: #555;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ========== SCREENS ========== */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ========== LOGIN SCREEN ========== */
+  #loginScreen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bg-texture {
+    position: absolute; inset: 0;
+    background: 
+      radial-gradient(ellipse at 20% 50%, rgba(200,184,154,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 50%, rgba(200,184,154,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 60px;
+    animation: fadeUp 1s ease both;
+  }
+
+  .logo-mark {
+    width: 140px;
+    height: 140px;
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .logo-mark svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .logo-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.6rem;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    color: var(--white);
+  }
+
+  .logo-name span { color: var(--accent); }
+
+  .logo-tagline {
+    font-size: 0.6rem;
+    letter-spacing: 0.5em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .login-box {
+    width: 100%;
+    max-width: 380px;
+    animation: fadeUp 1s 0.2s ease both;
+    padding: 0 24px;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .divider-line { flex: 1; height: 1px; background: var(--gray2); }
+  .divider-text { font-size: 0.65rem; letter-spacing: 0.2em; color: var(--text-muted); }
+
+  .input-group { margin-bottom: 16px; position: relative; }
+
+  .input-group input {
+    width: 100%;
+    background: var(--gray);
+    border: 1px solid #222;
+    color: var(--white);
+    padding: 16px 18px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .input-group input::placeholder { color: #444; }
+  .input-group input:focus { border-color: var(--accent); }
+  .input-group label {
+    display: block;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: var(--white);
+    color: var(--black);
+    border: none;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 12px;
+  }
+  .btn-primary:hover { background: var(--accent); }
+
+  .btn-psn {
+    width: 100%;
+    padding: 16px;
+    background: transparent;
+    color: var(--white);
+    border: 1px solid #333;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .btn-psn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-psn svg { width: 20px; height: 20px; }
+
+  .login-footer {
+    text-align: center;
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+  .login-footer a { color: var(--accent); text-decoration: none; cursor: pointer; }
+
+  /* ========== PREFS SCREEN ========== */
+  #prefsScreen {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .top-bar {
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #111;
+  }
+
+  .top-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.2em;
+    font-weight: 300;
+  }
+
+  .step-indicator {
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+  }
+
+  .prefs-content {
+    flex: 1;
+    padding: 60px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .prefs-section { display: none; animation: fadeUp 0.5s ease both; }
+  .prefs-section.active { display: block; }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.8rem;
+    font-weight: 300;
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+  .section-subtitle {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+
+  .tags-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 60px;
+  }
+
+  .tag {
+    padding: 10px 20px;
+    border: 1px solid #222;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    font-weight: 300;
+  }
+  .tag:hover { border-color: #444; }
+  .tag.selected { 
+    border-color: var(--accent); 
+    background: rgba(200,184,154,0.08);
+    color: var(--accent);
+  }
+
+  .nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.3s;
+  }
+  .btn-ghost:hover { color: var(--white); }
+
+  .btn-next {
+    padding: 14px 40px;
+    background: transparent;
+    border: 1px solid var(--white);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .btn-next:hover { background: var(--white); color: var(--black); }
+
+  /* ========== SWIPE SCREEN ========== */
+  #swipeScreen {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .swipe-bar {
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #111;
+  }
+
+  .swipe-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.2em;
+    font-weight: 300;
+  }
+
+  .nav-icons {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .nav-icon {
+    width: 36px; height: 36px;
+    border: 1px solid #222;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.3s;
+  }
+  .nav-icon:hover { border-color: var(--accent); }
+  .nav-icon svg { width: 16px; height: 16px; stroke: var(--white); fill: none; }
+
+  .swipe-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 40px;
+  }
+
+  .card-stack {
+    position: relative;
+    width: 360px;
+    height: 520px;
+  }
+
+  .game-card {
+    position: absolute;
+    inset: 0;
+    background: var(--gray);
+    border: 1px solid #1e1e1e;
+    overflow: hidden;
+    transition: transform 0.1s ease;
+    cursor: grab;
+    user-select: none;
+  }
+
+  .game-card:nth-child(2) { transform: rotate(2deg) translateY(8px) scale(0.97); z-index: 1; }
+  .game-card:nth-child(3) { transform: rotate(-1deg) translateY(16px) scale(0.94); z-index: 0; }
+  .game-card:nth-child(1) { z-index: 2; }
+
+  .game-card.dragging { cursor: grabbing; transition: none; }
+
+  .game-card.flying-right {
+    transition: transform 0.4s ease, opacity 0.4s ease;
+    transform: translateX(150%) rotate(20deg) !important;
+    opacity: 0;
+  }
+  .game-card.flying-left {
+    transition: transform 0.4s ease, opacity 0.4s ease;
+    transform: translateX(-150%) rotate(-20deg) !important;
+    opacity: 0;
+  }
+
+  .card-image {
+    width: 100%; height: 65%;
+    object-fit: cover;
+    display: block;
+    background: #111;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-image-placeholder {
+    width: 100%; height: 65%;
+    background: linear-gradient(135deg, #111 0%, #1a1a1a 50%, #0d0d0d 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 5rem;
+    color: #222;
+    position: relative;
+  }
+
+  .like-stamp {
+    position: absolute;
+    top: 24px; left: 24px;
+    border: 3px solid #4ade80;
+    color: #4ade80;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    padding: 6px 14px;
+    transform: rotate(-15deg);
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .nope-stamp {
+    position: absolute;
+    top: 24px; right: 24px;
+    border: 3px solid #f87171;
+    color: #f87171;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    padding: 6px 14px;
+    transform: rotate(15deg);
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .card-info {
+    padding: 20px 24px;
+  }
+
+  .card-genre {
+    font-size: 0.55rem;
+    letter-spacing: 0.4em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.7rem;
+    font-weight: 400;
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .meta-dot { color: #333; }
+
+  .card-desc {
+    font-size: 0.68rem;
+    color: #666;
+    line-height: 1.6;
+    margin-top: 10px;
+    font-weight: 300;
+  }
+
+  .action-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    padding: 0 40px 40px;
+  }
+
+  .action-btn {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    border: 1px solid #222;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: transparent;
+  }
+  .action-btn:hover { transform: scale(1.1); }
+  .action-btn.nope { border-color: #f87171; }
+  .action-btn.nope:hover { background: rgba(248,113,113,0.1); }
+  .action-btn.like { border-color: #4ade80; }
+  .action-btn.like:hover { background: rgba(74,222,128,0.1); }
+  .action-btn.super { border-color: #60a5fa; width: 48px; height: 48px; }
+  .action-btn.super:hover { background: rgba(96,165,250,0.1); }
+
+  .action-btn svg { width: 22px; height: 22px; fill: none; stroke-width: 1.5; }
+  .action-btn.nope svg { stroke: #f87171; }
+  .action-btn.like svg { stroke: #4ade80; }
+  .action-btn.super svg { stroke: #60a5fa; }
+
+  /* PSN panel */
+  .psn-panel {
+    position: fixed;
+    right: 0; top: 0; bottom: 0;
+    width: 320px;
+    background: var(--gray);
+    border-left: 1px solid #1a1a1a;
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+    z-index: 100;
+    padding: 40px 28px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .psn-panel.open { transform: translateX(0); }
+
+  .psn-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 32px;
+  }
+
+  .psn-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+  }
+
+  .close-btn {
+    background: none; border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 4px;
+    transition: color 0.3s;
+  }
+  .close-btn:hover { color: var(--white); }
+
+  .psn-subtitle {
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .game-list { flex: 1; overflow-y: auto; }
+  .game-list::-webkit-scrollbar { width: 2px; }
+  .game-list::-webkit-scrollbar-thumb { background: #333; }
+
+  .psn-game {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #1a1a1a;
+  }
+
+  .psn-game-icon {
+    width: 44px; height: 44px;
+    background: #111;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .psn-game-info { flex: 1; min-width: 0; }
+  .psn-game-name {
+    font-size: 0.72rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+  .psn-game-hours {
+    font-size: 0.58rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* Match overlay */
+  .match-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.92);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .match-overlay.show { opacity: 1; pointer-events: all; }
+
+  .match-box {
+    text-align: center;
+    animation: matchPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  .match-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 4rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .match-game-name {
+    font-size: 0.7rem;
+    letter-spacing: 0.4em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+
+  .btn-match-dismiss {
+    padding: 14px 50px;
+    background: transparent;
+    border: 1px solid var(--white);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .btn-match-dismiss:hover { background: var(--white); color: var(--black); }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes matchPop {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 1px;
+    background: #111;
+    position: relative;
+    margin-bottom: 0;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.4s ease;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="loginScreen" class="screen active">
+  <div class="bg-texture"></div>
+  
+  <div class="logo-container">
+    <div class="logo-mark">
+      <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+        <!-- S letter -->
+        <text x="15" y="95" font-family="Georgia, serif" font-size="90" font-weight="700" fill="white" opacity="0.95">S</text>
+        <!-- B letter -->
+        <text x="55" y="115" font-family="Georgia, serif" font-size="90" font-weight="700" fill="white" opacity="0.85">B</text>
+        <!-- ESSENCE text -->
+        <text x="50%" y="78" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="10" font-weight="400" letter-spacing="5" fill="#080808">SWIPERS</text>
+        <rect x="22" y="68" width="96" height="14" fill="#f0ede8" opacity="0.95"/>
+        <text x="50%" y="80" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="7" font-weight="500" letter-spacing="4" fill="#080808">SWIPERS</text>
+      </svg>
+    </div>
+    <div class="logo-name">SB<span>Swipers</span></div>
+    <div class="logo-tagline">Swipe your next obsession</div>
+  </div>
+
+  <div class="login-box">
+    <div class="input-group">
+      <label>Email</label>
+      <input type="email" placeholder="tu@email.com">
+    </div>
+    <div class="input-group">
+      <label>Contraseña</label>
+      <input type="password" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" onclick="goToPrefs()">ENTRAR</button>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-text">o continúa con</div>
+      <div class="divider-line"></div>
+    </div>
+
+    <button class="btn-psn" onclick="goToPrefs()">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M9.5 4.27v14.28l2.83.95V7.1c0-.47.2-.7.52-.6.4.13.48.5.48.97v3.53c1.43.43 2.5-.1 2.5-1.95 0-1.9-.66-2.78-2.35-3.35C11.77 5.16 10.25 4.77 9.5 4.27zm5.15 9.75c-1.62.45-3.37.3-4.65-.2v1.5c1.1.48 2.97.67 4.65.2 1.8-.5 2.85-1.77 2.85-3.15-.03-1.3-.73-2.23-2.85-2.8v1.5c.9.3 1.35.77 1.35 1.35.03.63-.5 1.3-1.35 1.6z"/>
+      </svg>
+      Conectar con PlayStation Network
+    </button>
+
+    <div class="login-footer">
+      ¿No tienes cuenta? <a onclick="goToPrefs()">Regístrate gratis</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PREFERENCES SCREEN ============ -->
+<div id="prefsScreen" class="screen">
+  <div class="top-bar">
+    <div class="top-logo">SBSwipers</div>
+    <div class="step-indicator" id="stepText">PASO 1 DE 4</div>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill" style="width:25%"></div>
+  </div>
+
+  <div class="prefs-content">
+    <!-- STEP 1: Genres -->
+    <div class="prefs-section active" id="step1">
+      <div class="section-title">¿Qué géneros<br>te apasionan?</div>
+      <div class="section-subtitle">Selecciona todos los que quieras</div>
+      <div class="tags-grid">
+        <div class="tag" onclick="toggleTag(this)">Acción</div>
+        <div class="tag" onclick="toggleTag(this)">RPG</div>
+        <div class="tag" onclick="toggleTag(this)">Aventura</div>
+        <div class="tag" onclick="toggleTag(this)">Horror</div>
+        <div class="tag" onclick="toggleTag(this)">FPS</div>
+        <div class="tag" onclick="toggleTag(this)">Estrategia</div>
+        <div class="tag" onclick="toggleTag(this)">Simulación</div>
+        <div class="tag" onclick="toggleTag(this)">Deportes</div>
+        <div class="tag" onclick="toggleTag(this)">Indie</div>
+        <div class="tag" onclick="toggleTag(this)">Mundo Abierto</div>
+        <div class="tag" onclick="toggleTag(this)">Plataformas</div>
+        <div class="tag" onclick="toggleTag(this)">Lucha</div>
+        <div class="tag" onclick="toggleTag(this)">Carreras</div>
+        <div class="tag" onclick="toggleTag(this)">MOBA</div>
+        <div class="tag" onclick="toggleTag(this)">Battle Royale</div>
+        <div class="tag" onclick="toggleTag(this)">Stealth</div>
+        <div class="tag" onclick="toggleTag(this)">Puzzle</div>
+        <div class="tag" onclick="toggleTag(this)">Roguelike</div>
+        <div class="tag" onclick="toggleTag(this)">Visual Novel</div>
+        <div class="tag" onclick="toggleTag(this)">MMORPG</div>
+      </div>
+      <div class="nav-buttons">
+        <span></span>
+        <button class="btn-next" onclick="nextStep(2)">SIGUIENTE →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Style -->
+    <div class="prefs-section" id="step2">
+      <div class="section-title">¿Cómo juegas<br>tú?</div>
+      <div class="section-subtitle">Tu estilo de juego</div>
+      <div class="tags-grid">
+        <div class="tag" onclick="toggleTag(this)">Historia & Narrativa</div>
+        <div class="tag" onclick="toggleTag(this)">Multijugador competitivo</div>
+        <div class="tag" onclick="toggleTag(this)">Cooperativo</div>
+        <div class="tag" onclick="toggleTag(this)">Completista 100%</div>
+        <div class="tag" onclick="toggleTag(this)">Speedrunner</div>
+        <div class="tag" onclick="toggleTag(this)">Casual</div>
+        <div class="tag" onclick="toggleTag(this)">Hardcore</div>
+        <div class="tag" onclick="toggleTag(this)">Explorador</div>
+        <div class="tag" onclick="toggleTag(this)">Crafting & Build</div>
+        <div class="tag" onclick="toggleTag(this)">PvP</div>
+        <div class="tag" onclick="toggleTag(this)">Solo</div>
+        <div class="tag" onclick="toggleTag(this)">Social/Online</div>
+        <div class="tag" onclick="toggleTag(this)">Gráficos ante todo</div>
+        <div class="tag" onclick="toggleTag(this)">Gameplay primero</div>
+      </div>
+      <div class="nav-buttons">
+        <button class="btn-ghost" onclick="nextStep(1)">← ATRÁS</button>
+        <button class="btn-next" onclick="nextStep(3)">SIGUIENTE →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Companies -->
+    <div class="prefs-section" id="step3">
+      <div class="section-title">¿Qué estudios<br>te inspiran?</div>
+      <div class="section-subtitle">Desarrolladoras y publishers</div>
+      <div class="tags-grid">
+        <div class="tag" onclick="toggleTag(this)">Naughty Dog</div>
+        <div class="tag" onclick="toggleTag(this)">FromSoftware</div>
+        <div class="tag" onclick="toggleTag(this)">Rockstar Games</div>
+        <div class="tag" onclick="toggleTag(this)">CD Projekt RED</div>
+        <div class="tag" onclick="toggleTag(this)">Nintendo EPD</div>
+        <div class="tag" onclick="toggleTag(this)">Bethesda</div>
+        <div class="tag" onclick="toggleTag(this)">Ubisoft</div>
+        <div class="tag" onclick="toggleTag(this)">EA</div>
+        <div class="tag" onclick="toggleTag(this)">Capcom</div>
+        <div class="tag" onclick="toggleTag(this)">Square Enix</div>
+        <div class="tag" onclick="toggleTag(this)">Insomniac</div>
+        <div class="tag" onclick="toggleTag(this)">Santa Monica Studio</div>
+        <div class="tag" onclick="toggleTag(this)">Valve</div>
+        <div class="tag" onclick="toggleTag(this)">Supergiant</div>
+        <div class="tag" onclick="toggleTag(this)">Obsidian</div>
+        <div class="tag" onclick="toggleTag(this)">Larian Studios</div>
+        <div class="tag" onclick="toggleTag(this)">Remedy Entertainment</div>
+        <div class="tag" onclick="toggleTag(this)">Kojima Productions</div>
+      </div>
+      <div class="nav-buttons">
+        <button class="btn-ghost" onclick="nextStep(2)">← ATRÁS</button>
+        <button class="btn-next" onclick="nextStep(4)">SIGUIENTE →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Platform -->
+    <div class="prefs-section" id="step4">
+      <div class="section-title">¿Dónde<br>juegas?</div>
+      <div class="section-subtitle">Plataformas preferidas</div>
+      <div class="tags-grid">
+        <div class="tag" onclick="toggleTag(this)">PlayStation 5</div>
+        <div class="tag" onclick="toggleTag(this)">PlayStation 4</div>
+        <div class="tag" onclick="toggleTag(this)">Xbox Series X|S</div>
+        <div class="tag" onclick="toggleTag(this)">Nintendo Switch</div>
+        <div class="tag" onclick="toggleTag(this)">PC (Steam)</div>
+        <div class="tag" onclick="toggleTag(this)">PC (Epic Games)</div>
+        <div class="tag" onclick="toggleTag(this)">PC (Game Pass)</div>
+        <div class="tag" onclick="toggleTag(this)">Mobile (iOS)</div>
+        <div class="tag" onclick="toggleTag(this)">Mobile (Android)</div>
+        <div class="tag" onclick="toggleTag(this)">VR / Meta Quest</div>
+        <div class="tag" onclick="toggleTag(this)">Retro / Emulación</div>
+      </div>
+      <div class="nav-buttons">
+        <button class="btn-ghost" onclick="nextStep(3)">← ATRÁS</button>
+        <button class="btn-next" onclick="goToSwipe()">EMPEZAR A SWIPEAR →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SWIPE SCREEN ============ -->
+<div id="swipeScreen" class="screen">
+  <div class="swipe-bar">
+    <div class="swipe-logo">SBSwipers</div>
+    <div class="nav-icons">
+      <div class="nav-icon" onclick="togglePSN()" title="Biblioteca PSN">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <div class="nav-icon" title="Configuración">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="swipe-area">
+    <div class="card-stack" id="cardStack">
+      <!-- Cards injected by JS -->
+    </div>
+  </div>
+
+  <div class="action-buttons">
+    <button class="action-btn nope" onclick="swipeLeft()" title="No me interesa">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <button class="action-btn super" onclick="superLike()" title="¡Me encanta!">
+      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    </button>
+    <button class="action-btn like" onclick="swipeRight()" title="Me interesa">
+      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- PSN Panel -->
+<div class="psn-panel" id="psnPanel">
+  <div class="psn-header">
+    <div class="psn-title">Biblioteca PSN</div>
+    <button class="close-btn" onclick="togglePSN()">✕</button>
+  </div>
+  <div class="psn-subtitle">Jugados recientemente</div>
+  <div class="game-list" id="psnGameList"></div>
+</div>
+
+<!-- Match Overlay -->
+<div class="match-overlay" id="matchOverlay">
+  <div class="match-box">
+    <div class="match-label">¡Match!</div>
+    <div class="match-game-name" id="matchGameName"></div>
+    <button class="btn-match-dismiss" onclick="dismissMatch()">Seguir explorando</button>
+  </div>
+</div>
+
+<script>
+const games = [
+  { title: "Elden Ring", genre: "Action RPG", studio: "FromSoftware", platform: "PS5 · PC", year: "2022", emoji: "⚔️", desc: "Un mundo abierto oscuro forjado junto a George R.R. Martin. Domina o muere." },
+  { title: "God of War Ragnarök", genre: "Acción / Aventura", studio: "Santa Monica Studio", platform: "PS5 · PS4", year: "2022", emoji: "🪓", desc: "Kratos y Atreus enfrentan el fin de los nueve reinos nórdicos." },
+  { title: "Baldur's Gate 3", genre: "RPG por turnos", studio: "Larian Studios", platform: "PC · PS5", year: "2023", emoji: "🎲", desc: "El RPG definitivo. Millones de decisiones, un mundo que responde a cada una." },
+  { title: "Alan Wake 2", genre: "Horror / Thriller", studio: "Remedy Entertainment", platform: "PS5 · Xbox · PC", year: "2023", emoji: "🔦", desc: "Dos mundos, dos protagonistas, una espiral de oscuridad literaria." },
+  { title: "Hollow Knight", genre: "Metroidvania", studio: "Team Cherry", platform: "Multi", year: "2017", emoji: "🦋", desc: "Un reino de insectos olvidado bajo tierra. Arte, reto y melancolía pura." },
+  { title: "Cyberpunk 2077", genre: "RPG / Mundo Abierto", studio: "CD Projekt RED", platform: "PS5 · Xbox · PC", year: "2020", emoji: "🌆", desc: "Night City es brutal, hermosa y completamente tuya en Phantom Liberty." },
+  { title: "Hades II", genre: "Roguelike", studio: "Supergiant Games", platform: "PC (EA)", year: "2024", emoji: "🔱", desc: "La secuela que supera al original. Combate divino y narrativa impecable." },
+  { title: "Metal Gear Solid Δ", genre: "Stealth / Acción", studio: "Konami", platform: "PS5 · Xbox · PC", year: "2025", emoji: "🐍", desc: "El regreso de Big Boss. El remake que el mundo esperaba." },
+];
+
+const psnGames = [
+  { name: "The Last of Us Part I", hours: "43h jugadas", emoji: "🌿" },
+  { name: "Ghost of Tsushima", hours: "67h jugadas", emoji: "🌸" },
+  { name: "Spider-Man 2", hours: "29h jugadas", emoji: "🕷️" },
+  { name: "Gran Turismo 7", hours: "112h jugadas", emoji: "🏎️" },
+  { name: "Astro Bot", hours: "18h jugadas", emoji: "🤖" },
+  { name: "Final Fantasy XVI", hours: "54h jugadas", emoji: "🔥" },
+];
+
+let currentIndex = 0;
+let isDragging = false;
+let startX = 0;
+let currentX = 0;
+let activeCard = null;
+
+function buildCards() {
+  const stack = document.getElementById('cardStack');
+  stack.innerHTML = '';
+  const slice = games.slice(currentIndex, currentIndex + 3);
+  slice.reverse().forEach((game, i) => {
+    const card = createCard(game, i);
+    stack.appendChild(card);
+  });
+  setupDrag();
+}
+
+function createCard(game, idx) {
+  const div = document.createElement('div');
+  div.className = 'game-card';
+  if (idx === 0) {
+    div.setAttribute('data-index', currentIndex);
+  }
+  div.innerHTML = `
+    <div class="card-image-placeholder">${game.emoji}</div>
+    <div class="like-stamp" id="like-stamp">LIKE</div>
+    <div class="nope-stamp" id="nope-stamp">NOPE</div>
+    <div class="card-info">
+      <div class="card-genre">${game.genre}</div>
+      <div class="card-title">${game.title}</div>
+      <div class="card-meta">
+        <span>${game.studio}</span>
+        <span class="meta-dot">·</span>
+        <span>${game.year}</span>
+        <span class="meta-dot">·</span>
+        <span>${game.platform}</span>
+      </div>
+      <div class="card-desc">${game.desc}</div>
+    </div>
+  `;
+  if (idx === 2) {
+    setupDragCard(div);
+  }
+  return div;
+}
+
+function setupDragCard(card) {
+  card.addEventListener('mousedown', onDragStart);
+  card.addEventListener('touchstart', onDragStart, { passive: true });
+}
+
+function onDragStart(e) {
+  isDragging = true;
+  activeCard = e.currentTarget;
+  activeCard.classList.add('dragging');
+  startX = e.clientX || e.touches[0].clientX;
+  currentX = 0;
+
+  document.addEventListener('mousemove', onDragMove);
+  document.addEventListener('touchmove', onDragMove, { passive: true });
+  document.addEventListener('mouseup', onDragEnd);
+  document.addEventListener('touchend', onDragEnd);
+}
+
+function onDragMove(e) {
+  if (!isDragging) return;
+  const x = (e.clientX || e.touches[0].clientX) - startX;
+  currentX = x;
+  const rotate = x * 0.08;
+  activeCard.style.transform = `translateX(${x}px) rotate(${rotate}deg)`;
+
+  const likeStamp = activeCard.querySelector('.like-stamp');
+  const nopeStamp = activeCard.querySelector('.nope-stamp');
+  if (x > 40) { likeStamp.style.opacity = Math.min((x - 40) / 80, 1); nopeStamp.style.opacity = 0; }
+  else if (x < -40) { nopeStamp.style.opacity = Math.min((-x - 40) / 80, 1); likeStamp.style.opacity = 0; }
+  else { likeStamp.style.opacity = 0; nopeStamp.style.opacity = 0; }
+}
+
+function onDragEnd() {
+  if (!isDragging) return;
+  isDragging = false;
+  document.removeEventListener('mousemove', onDragMove);
+  document.removeEventListener('touchmove', onDragMove);
+  document.removeEventListener('mouseup', onDragEnd);
+  document.removeEventListener('touchend', onDragEnd);
+  activeCard.classList.remove('dragging');
+
+  if (currentX > 100) {
+    flyCard('right');
+  } else if (currentX < -100) {
+    flyCard('left');
+  } else {
+    activeCard.style.transform = '';
+    activeCard.querySelector('.like-stamp').style.opacity = 0;
+    activeCard.querySelector('.nope-stamp').style.opacity = 0;
+  }
+}
+
+function setupDrag() {
+  const stack = document.getElementById('cardStack');
+  const topCard = stack.lastElementChild;
+  if (topCard) setupDragCard(topCard);
+}
+
+function flyCard(direction) {
+  const stack = document.getElementById('cardStack');
+  const topCard = stack.lastElementChild;
+  if (!topCard) return;
+
+  topCard.classList.add(direction === 'right' ? 'flying-right' : 'flying-left');
+
+  if (direction === 'right') {
+    const idx = currentIndex % games.length;
+    const game = games[idx];
+    if (Math.random() > 0.5) showMatch(game.title);
+  }
+
+  setTimeout(() => {
+    topCard.remove();
+    currentIndex++;
+    if (currentIndex >= games.length) currentIndex = 0;
+    
+    const remaining = stack.children.length;
+    if (remaining < 3) {
+      const nextGame = games[currentIndex % games.length];
+      const newCard = createCard(nextGame, remaining);
+      newCard.style.transform = 'rotate(-1deg) translateY(16px) scale(0.94)';
+      stack.insertBefore(newCard, stack.firstChild);
+    }
+    setupDrag();
+  }, 400);
+}
+
+function swipeLeft() {
+  activeCard = document.getElementById('cardStack').lastElementChild;
+  if (!activeCard) return;
+  currentX = -150;
+  flyCard('left');
+}
+
+function swipeRight() {
+  activeCard = document.getElementById('cardStack').lastElementChild;
+  if (!activeCard) return;
+  currentX = 150;
+  flyCard('right');
+}
+
+function superLike() {
+  const stack = document.getElementById('cardStack');
+  const topCard = stack.lastElementChild;
+  if (!topCard) return;
+  topCard.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+  topCard.style.transform = 'translateY(-150%) scale(1.05)';
+  topCard.style.opacity = '0';
+  const idx = currentIndex % games.length;
+  showMatch(games[idx].title);
+  setTimeout(() => { topCard.remove(); currentIndex++; setupDrag(); }, 400);
+}
+
+function showMatch(gameName) {
+  document.getElementById('matchGameName').textContent = gameName;
+  document.getElementById('matchOverlay').classList.add('show');
+}
+
+function dismissMatch() {
+  document.getElementById('matchOverlay').classList.remove('show');
+}
+
+function togglePSN() {
+  document.getElementById('psnPanel').classList.toggle('open');
+  renderPSN();
+}
+
+function renderPSN() {
+  const list = document.getElementById('psnGameList');
+  list.innerHTML = psnGames.map(g => `
+    <div class="psn-game">
+      <div class="psn-game-icon">${g.emoji}</div>
+      <div class="psn-game-info">
+        <div class="psn-game-name">${g.name}</div>
+        <div class="psn-game-hours">${g.hours}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Navigation
+function goToPrefs() {
+  document.getElementById('loginScreen').classList.remove('active');
+  document.getElementById('prefsScreen').classList.add('active');
+}
+
+function goToSwipe() {
+  document.getElementById('prefsScreen').classList.remove('active');
+  document.getElementById('swipeScreen').classList.add('active');
+  buildCards();
+}
+
+let currentStep = 1;
+function nextStep(step) {
+  document.getElementById(`step${currentStep}`).classList.remove('active');
+  document.getElementById(`step${step}`).classList.add('active');
+  currentStep = step;
+  const percent = (step / 4) * 100;
+  document.getElementById('progressFill').style.width = percent + '%';
+  document.getElementById('stepText').textContent = `PASO ${step} DE 4`;
+}
+
+function toggleTag(el) {
+  el.classList.toggle('selected');
+}
+</script>
+</body>
+</html>
