@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>SBSwipers</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<script>
+const CONFIG = {
+  RAWG_KEY: "4c24b16e88e548bb975a1382a12e853f",
+  FIREBASE: {
+    apiKey:            "AIzaSyBFOTbhx32IxJLhUyLzZiZpCVMv0mhklk8",
+    authDomain:        "sbswipers.firebaseapp.com",
+    projectId:         "sbswipers",
+    storageBucket:     "sbswipers.firebasestorage.app",
+    messagingSenderId: "958245803097",
+    appId:             "1:958245803097:web:d64416633edbc1f7370d48"
+  }
+};
+</script>
+<style>
+:root{
+  --bg:#070707;--surface:#111;--surface2:#181818;
+  --border:#1e1e1e;--border2:#2a2a2a;
+  --white:#ede9e1;--muted:#4a4a4a;--muted2:#666;
+  --accent:#c9b89b;--like:#4ade80;--nope:#f87171;--super:#60a5fa;
+  --nav-h:58px;--bot-h:64px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{height:100%;height:-webkit-fill-available;}
+body{height:100%;height:-webkit-fill-available;background:var(--bg);color:var(--white);font-family:'Montserrat',sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;}
+
+/* TOAST */
+#toast{position:fixed;bottom:calc(var(--bot-h)+16px);left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);border:1px solid var(--border2);padding:11px 22px;font-size:.65rem;letter-spacing:.18em;opacity:0;transition:all .35s;z-index:9999;pointer-events:none;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9998;transition:opacity .5s;}
+#loader.gone{opacity:0;pointer-events:none;}
+.ld-logo{font-family:'Cormorant Garamond',serif;font-size:2.4rem;letter-spacing:.45em;font-weight:300;animation:pulse 1.4s ease infinite;}
+@keyframes pulse{0%,100%{opacity:.15;}50%{opacity:1;}}
+
+/* APP */
+#app{height:100%;height:-webkit-fill-available;display:flex;flex-direction:column;overflow:hidden;}
+.screen{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+.screen.active{display:flex;}
+
+/* ══════ LOGIN ══════ */
+#loginScreen{align-items:center;justify-content:center;position:relative;}
+.login-bg{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 25% 65%,rgba(201,184,155,.06) 0,transparent 55%),radial-gradient(ellipse at 75% 35%,rgba(201,184,155,.04) 0,transparent 55%);}
+.login-card{width:100%;max-width:360px;padding:0 28px;animation:fadeUp .8s ease both;position:relative;}
+.sb-wrap{text-align:center;margin-bottom:40px;}
+.sb-mark{position:relative;display:inline-flex;align-items:center;justify-content:center;width:92px;height:92px;margin-bottom:10px;}
+.sb-s{font-family:'Cormorant Garamond',serif;font-size:5rem;font-weight:700;line-height:1;color:var(--white);position:absolute;left:2px;top:0;}
+.sb-b{font-family:'Cormorant Garamond',serif;font-size:5rem;font-weight:700;line-height:1;color:var(--white);opacity:.8;position:absolute;right:2px;top:10px;}
+.sb-badge{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--white);color:var(--bg);font-family:'Montserrat',sans-serif;font-size:.35rem;font-weight:700;letter-spacing:.45em;padding:3px 8px;white-space:nowrap;z-index:2;}
+.login-title{font-family:'Cormorant Garamond',serif;font-size:1.75rem;font-weight:300;letter-spacing:.35em;}
+.login-sub{font-size:.5rem;letter-spacing:.38em;color:var(--muted);text-transform:uppercase;margin-top:4px;}
+.auth-tabs{display:flex;margin-bottom:20px;border-bottom:1px solid var(--border2);}
+.auth-tab{flex:1;padding:12px 0;text-align:center;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;touch-action:manipulation;}
+.auth-tab.active{color:var(--white);border-bottom-color:var(--accent);}
+.auth-panel{display:none;animation:fadeUp .3s ease both;}
+.auth-panel.active{display:block;}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:.52rem;letter-spacing:.24em;color:var(--muted2);text-transform:uppercase;margin-bottom:6px;}
+.field input{width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--white);padding:14px 14px;font-family:'Montserrat',sans-serif;font-size:.75rem;font-weight:300;outline:none;transition:border-color .3s;border-radius:0;-webkit-appearance:none;}
+.field input::placeholder{color:var(--muted);}
+.field input:focus{border-color:var(--accent);}
+.btn-main{width:100%;padding:15px;background:var(--white);color:var(--bg);border:none;font-family:'Montserrat',sans-serif;font-size:.63rem;font-weight:500;letter-spacing:.28em;text-transform:uppercase;cursor:pointer;transition:background .25s;margin-bottom:10px;touch-action:manipulation;}
+.btn-main:hover,.btn-main:active{background:var(--accent);}
+.divider{display:flex;align-items:center;gap:14px;margin:16px 0;color:var(--muted);font-size:.54rem;letter-spacing:.2em;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border2);}
+.btn-google{width:100%;padding:13px;background:transparent;border:1px solid var(--border2);color:var(--white);font-family:'Montserrat',sans-serif;font-size:.63rem;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:border-color .25s;touch-action:manipulation;}
+.btn-google:hover,.btn-google:active{border-color:var(--accent);}
+.btn-google svg{width:16px;height:16px;flex-shrink:0;}
+.auth-switch{text-align:center;font-size:.53rem;color:var(--muted);letter-spacing:.1em;margin-top:14px;line-height:1.7;}
+.auth-switch a{color:var(--accent);cursor:pointer;}
+
+/* ══════ PREFS ══════ */
+#prefsScreen{overflow:hidden;}
+.prefs-bar-wrap{height:2px;background:var(--border);flex-shrink:0;}
+.prefs-bar{height:100%;background:var(--accent);transition:width .4s ease;}
+.prefs-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:32px 22px 40px;}
+.prefs-scroll::-webkit-scrollbar{display:none;}
+.pref-step{display:none;animation:fadeUp .4s ease both;}
+.pref-step.active{display:block;}
+.pstep-lbl{font-size:.5rem;letter-spacing:.44em;color:var(--accent);text-transform:uppercase;margin-bottom:7px;}
+.pstep-title{font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:300;line-height:1.1;margin-bottom:5px;}
+.pstep-sub{font-size:.56rem;color:var(--muted2);letter-spacing:.12em;margin-bottom:26px;}
+.tags-wrap{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:32px;}
+.tag{padding:9px 15px;border:1px solid var(--border2);font-size:.56rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;transition:all .18s;user-select:none;font-weight:300;touch-action:manipulation;}
+.tag.on{border-color:var(--accent);background:rgba(201,184,155,.1);color:var(--accent);}
+.pref-nav{display:flex;justify-content:space-between;align-items:center;}
+.btn-ghost{background:none;border:none;color:var(--muted2);font-family:'Montserrat',sans-serif;font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;padding:10px 0;transition:color .2s;touch-action:manipulation;}
+.btn-ghost:hover{color:var(--white);}
+.btn-filled{padding:13px 28px;background:var(--white);color:var(--bg);border:none;font-family:'Montserrat',sans-serif;font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;transition:background .25s;touch-action:manipulation;}
+.btn-filled:hover,.btn-filled:active{background:var(--accent);}
+
+/* ══════ MAIN ══════ */
+#mainScreen{position:relative;}
+.top-nav{display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:var(--nav-h);border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg);z-index:20;}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;letter-spacing:.3em;}
+.nav-tabs{display:flex;}
+.nav-tab{padding:0 16px;height:var(--nav-h);display:flex;align-items:center;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;border-bottom:2px solid transparent;cursor:pointer;color:var(--muted2);transition:all .2s;touch-action:manipulation;}
+.nav-tab:hover{color:var(--white);}
+.nav-tab.active{color:var(--white);border-bottom-color:var(--accent);}
+.nav-avatar{width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:.65rem;overflow:hidden;cursor:pointer;}
+.nav-avatar img{width:100%;height:100%;object-fit:cover;}
+
+/* bottom nav */
+.bot-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--bot-h);background:var(--bg);border-top:1px solid var(--border);z-index:20;padding-bottom:env(safe-area-inset-bottom);}
+.bot-inner{height:100%;display:flex;align-items:center;}
+.bot-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;padding:8px 0;touch-action:manipulation;position:relative;}
+.bot-tab svg{width:21px;height:21px;stroke:var(--muted2);fill:none;stroke-width:1.5;transition:stroke .2s;}
+.bot-tab span{font-size:.42rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted2);transition:color .2s;}
+.bot-tab.active svg{stroke:var(--white);}
+.bot-tab.active span{color:var(--white);}
+.bot-badge{position:absolute;top:5px;right:calc(50% - 20px);background:var(--accent);color:var(--bg);border-radius:10px;padding:1px 5px;font-size:.38rem;font-weight:600;display:none;}
+
+/* tab screens */
+.tab-screen{display:none;flex:1;flex-direction:column;min-height:0;overflow:hidden;}
+.tab-screen.active{display:flex;}
+
+/* ══════ SWIPE TAB ══════ */
+#swipeTab{background:var(--bg);}
+.swipe-area{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;min-height:0;position:relative;}
+.card-stack{position:relative;width:min(300px,calc(100vw - 28px));height:min(430px,calc(100svh - var(--nav-h) - var(--bot-h) - 108px));flex-shrink:0;}
+
+/* GAME CARD */
+.game-card{position:absolute;inset:0;background:var(--surface);border:1px solid var(--border);overflow:hidden;cursor:grab;user-select:none;will-change:transform;}
+.game-card.dragging{cursor:grabbing;transition:none!important;}
+.game-card.fly-r{transition:transform .42s ease,opacity .42s ease!important;transform:translateX(150vw) rotate(25deg)!important;opacity:0!important;}
+.game-card.fly-l{transition:transform .42s ease,opacity .42s ease!important;transform:translateX(-150vw) rotate(-25deg)!important;opacity:0!important;}
+.game-card.fly-u{transition:transform .42s ease,opacity .42s ease!important;transform:translateY(-150vh) scale(1.06)!important;opacity:0!important;}
+.c2{transform:rotate(2.5deg) translateY(10px) scale(.965);z-index:1;}
+.c3{transform:rotate(-1.5deg) translateY(20px) scale(.93);z-index:0;}
+.c1{z-index:2;}
+.card-img{width:100%;height:58%;object-fit:cover;display:block;background:var(--surface2);}
+.card-ph{width:100%;height:58%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:2.5rem;}
+.stamp{position:absolute;top:16px;font-family:'Montserrat',sans-serif;font-size:.85rem;font-weight:700;letter-spacing:.22em;padding:5px 11px;border:3px solid;opacity:0;transition:opacity .1s;pointer-events:none;}
+.sl{left:12px;border-color:var(--like);color:var(--like);transform:rotate(-14deg);}
+.sn{right:12px;border-color:var(--nope);color:var(--nope);transform:rotate(14deg);}
+.ss{left:50%;transform:translateX(-50%);border-color:var(--super);color:var(--super);top:22px;}
+.card-body{padding:12px 16px 8px;}
+.card-genre{font-size:.46rem;letter-spacing:.35em;color:var(--accent);text-transform:uppercase;margin-bottom:3px;}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;margin-bottom:2px;line-height:1.1;}
+.card-meta{font-size:.52rem;color:var(--muted2);letter-spacing:.06em;}
+.card-stars{color:var(--accent);font-size:.6rem;margin-top:4px;letter-spacing:.5px;}
+/* info button on card */
+.card-info-btn{
+  position:absolute;bottom:10px;right:12px;
+  width:28px;height:28px;border-radius:50%;
+  background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:.65rem;color:var(--white);
+  touch-action:manipulation;z-index:5;
+  transition:background .2s;
+}
+.card-info-btn:hover{background:rgba(201,184,155,.3);}
+
+/* ACTION BUTTONS */
+.action-row{display:flex;align-items:center;justify-content:center;gap:18px;padding:8px 0 12px;flex-shrink:0;}
+.act{border-radius:50%;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;outline:none;border:1px solid var(--border2);transition:transform .2s,background .2s;touch-action:manipulation;}
+.act:active{transform:scale(.92)!important;}
+.act.nope{width:56px;height:56px;border-color:var(--nope);}
+.act.nope svg{stroke:var(--nope);width:21px;height:21px;stroke-width:1.8;fill:none;}
+.act.like{width:56px;height:56px;border-color:var(--like);}
+.act.like svg{stroke:var(--like);width:21px;height:21px;stroke-width:1.5;fill:none;}
+.act.sup{width:44px;height:44px;border-color:var(--super);}
+.act.sup svg{stroke:var(--super);width:17px;height:17px;stroke-width:1.5;fill:none;}
+
+/* empty */
+.empty-s{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--muted);text-align:center;padding:20px;}
+.empty-s .big{font-size:3rem;opacity:.2;}
+.empty-s p{font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;}
+.btn-reload{margin-top:8px;padding:11px 22px;background:transparent;border:1px solid var(--border2);color:var(--white);font-family:'Montserrat',sans-serif;font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;}
+
+/* ══════ GAME DETAIL PANEL ══════ */
+#detailPanel{
+  position:fixed;inset:0;z-index:300;
+  display:flex;align-items:flex-end;
+  pointer-events:none;opacity:0;
+  transition:opacity .3s;
+}
+#detailPanel.open{opacity:1;pointer-events:all;}
+.detail-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.7);}
+.detail-sheet{
+  position:relative;z-index:1;
+  width:100%;max-height:92vh;
+  background:var(--surface);
+  border-top:1px solid var(--border2);
+  border-radius:0;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  transform:translateY(100%);
+  transition:transform .4s cubic-bezier(.32,0,.67,1);
+}
+#detailPanel.open .detail-sheet{transform:translateY(0);}
+.detail-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:12px auto 0;}
+.detail-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 20px 40px;}
+.detail-scroll::-webkit-scrollbar{width:2px;}
+.detail-scroll::-webkit-scrollbar-thumb{background:var(--border2);}
+
+/* detail hero */
+.d-hero{position:relative;width:100%;height:200px;margin-bottom:20px;overflow:hidden;}
+.d-hero img{width:100%;height:100%;object-fit:cover;display:block;}
+.d-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,var(--surface) 0%,transparent 60%);}
+.d-close{
+  position:absolute;top:12px;right:12px;
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:.8rem;color:var(--white);
+  touch-action:manipulation;
+}
+.d-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;margin-bottom:4px;line-height:1.1;}
+.d-genre{font-size:.52rem;letter-spacing:.35em;color:var(--accent);text-transform:uppercase;margin-bottom:14px;}
+
+/* platforms */
+.d-section-title{font-size:.52rem;letter-spacing:.35em;color:var(--muted2);text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.d-platforms{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
+.d-plat{padding:5px 12px;border:1px solid var(--border2);font-size:.52rem;letter-spacing:.1em;color:var(--muted2);white-space:nowrap;}
+.d-plat.highlight{border-color:var(--accent);color:var(--accent);}
+
+/* description */
+.d-desc{font-size:.7rem;line-height:1.8;color:#aaa;font-weight:300;margin-bottom:24px;}
+
+/* trailer */
+.d-trailer-wrap{position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;margin-bottom:24px;background:var(--surface2);}
+.d-trailer-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
+.d-no-trailer{padding:40px 0;text-align:center;font-size:.58rem;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;}
+
+/* reviews */
+.d-reviews{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;}
+.d-review{display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);}
+.d-review-logo{flex-shrink:0;font-size:.6rem;font-weight:600;letter-spacing:.1em;color:var(--white);width:70px;}
+.d-review-score-wrap{flex:1;}
+.d-review-bar-bg{height:3px;background:var(--border2);border-radius:1px;overflow:hidden;margin-bottom:4px;}
+.d-review-bar{height:100%;border-radius:1px;transition:width .8s ease;}
+.d-review-meta{font-size:.5rem;color:var(--muted2);letter-spacing:.1em;}
+.d-review-num{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;flex-shrink:0;}
+.score-great{color:var(--like);}
+.score-good{color:var(--accent);}
+.score-mid{color:#f59e0b;}
+.score-low{color:var(--nope);}
+
+/* detail actions */
+.d-actions{display:flex;gap:10px;margin-top:8px;}
+.d-act-like{flex:1;padding:14px;background:transparent;border:1px solid var(--like);color:var(--like);font-family:'Montserrat',sans-serif;font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;transition:all .2s;touch-action:manipulation;}
+.d-act-like:hover,.d-act-like:active{background:rgba(74,222,128,.12);}
+.d-act-nope{flex:1;padding:14px;background:transparent;border:1px solid var(--nope);color:var(--nope);font-family:'Montserrat',sans-serif;font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;transition:all .2s;touch-action:manipulation;}
+.d-act-nope:hover,.d-act-nope:active{background:rgba(248,113,113,.12);}
+
+/* ══════ MATCHES TAB ══════ */
+#matchesTab{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:22px 18px;}
+#matchesTab::-webkit-scrollbar{display:none;}
+.tab-hd{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;margin-bottom:3px;}
+.tab-sub{font-size:.53rem;color:var(--muted2);letter-spacing:.26em;text-transform:uppercase;margin-bottom:22px;}
+.matches-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
+.mwrap{position:relative;}
+.mcard{background:var(--surface);border:1px solid var(--border);overflow:hidden;transition:border-color .2s;cursor:pointer;}
+.mcard:hover{border-color:var(--accent);}
+.mcard-img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:var(--surface2);}
+.mcard-info{padding:10px 12px;}
+.mcard-name{font-family:'Cormorant Garamond',serif;font-size:.9rem;line-height:1.2;margin-bottom:3px;}
+.mcard-lbl{font-size:.44rem;letter-spacing:.18em;text-transform:uppercase;}
+.mcard-lbl.s{color:var(--super);}
+.mcard-lbl.l{color:var(--accent);}
+.mcard-star{position:absolute;top:6px;right:6px;background:var(--super);color:var(--bg);width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.48rem;}
+.no-m{text-align:center;padding:60px 0;color:var(--muted);}
+.no-m-ico{font-size:2.8rem;opacity:.17;margin-bottom:12px;}
+.no-m-txt{font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;}
+
+/* ══════ PROFILE TAB ══════ */
+#profileTab{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:22px 18px;}
+#profileTab::-webkit-scrollbar{display:none;}
+.profile-wrap{display:flex;flex-direction:column;gap:24px;max-width:700px;}
+.p-hero{display:flex;align-items:flex-start;gap:18px;}
+.p-av-wrap{position:relative;flex-shrink:0;}
+.p-av{width:76px;height:76px;border-radius:50%;object-fit:cover;border:1px solid var(--border2);display:block;background:var(--surface2);}
+.p-av-ph{width:76px;height:76px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:300;}
+.p-edit{position:absolute;bottom:1px;right:1px;width:23px;height:23px;background:var(--surface2);border:1px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.62rem;touch-action:manipulation;}
+.p-hero-info{flex:1;min-width:0;}
+.p-name{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:300;margin-bottom:2px;}
+.p-email{font-size:.54rem;color:var(--muted2);letter-spacing:.08em;margin-bottom:12px;}
+.p-stats{display:flex;gap:22px;}
+.p-stat .num{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;color:var(--accent);}
+.p-stat .lbl{font-size:.46rem;color:var(--muted2);letter-spacing:.2em;text-transform:uppercase;}
+.p-section{background:var(--surface);border:1px solid var(--border);padding:16px;}
+.p-sec-title{font-size:.52rem;letter-spacing:.32em;color:var(--accent);text-transform:uppercase;margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid var(--border);}
+.fgroup{margin-bottom:12px;}
+.flbl{display:block;font-size:.5rem;letter-spacing:.22em;color:var(--muted2);text-transform:uppercase;margin-bottom:6px;}
+.finput{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--white);padding:12px 13px;font-family:'Montserrat',sans-serif;font-size:.7rem;font-weight:300;outline:none;transition:border-color .3s;border-radius:0;-webkit-appearance:none;}
+.finput::placeholder{color:var(--muted);}
+.finput:focus{border-color:var(--accent);}
+textarea.finput{resize:vertical;min-height:68px;}
+.ptag-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px;}
+.ptag{padding:4px 10px;border:1px solid var(--border2);font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);}
+.p-actions{display:flex;gap:9px;flex-wrap:wrap;}
+.btn-save{flex:1;padding:12px 18px;background:var(--white);color:var(--bg);border:none;font-family:'Montserrat',sans-serif;font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:background .2s;touch-action:manipulation;}
+.btn-save:hover,.btn-save:active{background:var(--accent);}
+.btn-out{padding:12px 18px;background:transparent;border:1px solid var(--border);color:var(--muted2);font-family:'Montserrat',sans-serif;font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:all .2s;touch-action:manipulation;}
+.btn-out:hover,.btn-out:active{border-color:var(--nope);color:var(--nope);}
+
+/* ══════ MATCH OVERLAY ══════ */
+#matchOv{position:fixed;inset:0;background:rgba(0,0,0,.93);display:flex;align-items:center;justify-content:center;z-index:600;opacity:0;pointer-events:none;transition:opacity .3s;padding:20px;}
+#matchOv.show{opacity:1;pointer-events:all;}
+.match-box{text-align:center;animation:matchPop .45s cubic-bezier(.34,1.56,.64,1) both;max-width:280px;width:100%;}
+.m-icon{font-size:2.8rem;margin-bottom:10px;}
+.m-title{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;color:var(--accent);letter-spacing:.1em;margin-bottom:5px;}
+.m-name{font-size:.56rem;letter-spacing:.36em;color:var(--muted2);text-transform:uppercase;margin-bottom:6px;}
+.m-super{font-size:.52rem;letter-spacing:.28em;color:var(--super);text-transform:uppercase;margin-bottom:20px;display:none;}
+.m-img{width:110px;height:155px;object-fit:cover;display:block;margin:0 auto 20px;border:1px solid var(--border2);}
+.btn-dismiss{padding:12px 38px;background:transparent;border:1px solid var(--border2);color:var(--white);font-family:'Montserrat',sans-serif;font-size:.56rem;letter-spacing:.26em;text-transform:uppercase;cursor:pointer;transition:all .25s;touch-action:manipulation;}
+.btn-dismiss:hover,.btn-dismiss:active{background:var(--white);color:var(--bg);}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  :root{--nav-h:50px;}
+  .top-nav .nav-tabs,.top-nav .nav-right{display:none!important;}
+  .bot-nav{display:flex!important;flex-direction:column;}
+  .tab-screen{padding-bottom:var(--bot-h);}
+  #matchesTab,#profileTab{padding-bottom:calc(var(--bot-h)+14px);}
+  .profile-wrap{max-width:100%;}
+  .card-stack{width:calc(100vw - 28px);height:calc(100svh - var(--nav-h) - var(--bot-h) - 104px);max-height:450px;}
+}
+@media(min-width:601px){
+  .bot-nav{display:none!important;}
+  .detail-sheet{max-width:600px;margin:0 auto;border:1px solid var(--border2);border-bottom:none;border-radius:4px 4px 0 0;}
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes matchPop{from{opacity:0;transform:scale(.82);}to{opacity:1;transform:scale(1);}}
+</style>
+</head>
+<body>
+
+<div id="loader"><div class="ld-logo">SBSwipers</div></div>
+<div id="toast"></div>
+
+<!-- MATCH OVERLAY -->
+<div id="matchOv">
+  <div class="match-box">
+    <div class="m-icon">🎮</div>
+    <div class="m-title">¡Match!</div>
+    <div class="m-name" id="mName"></div>
+    <div class="m-super" id="mSuper">⭐ Super Like</div>
+    <img id="mImg" class="m-img" src="" alt="">
+    <button class="btn-dismiss" onclick="App.dismiss()">Seguir explorando</button>
+  </div>
+</div>
+
+<!-- GAME DETAIL PANEL -->
+<div id="detailPanel">
+  <div class="detail-backdrop" onclick="Detail.close()"></div>
+  <div class="detail-sheet" id="detailSheet">
+    <div class="detail-handle"></div>
+    <div class="detail-scroll" id="detailScroll">
+      <!-- filled by JS -->
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+<!-- ════ LOGIN ════ -->
+<div id="loginScreen" class="screen active">
+  <div class="login-bg"></div>
+  <div class="login-card">
+    <div class="sb-wrap">
+      <div class="sb-mark">
+        <span class="sb-s">S</span><span class="sb-b">B</span>
+        <div class="sb-badge">SWIPERS</div>
+      </div>
+      <div class="login-title">SBSwipers</div>
+      <div class="login-sub">Swipe your next obsession</div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="atL" onclick="Auth.tab('login')">Iniciar sesión</div>
+      <div class="auth-tab" id="atR" onclick="Auth.tab('register')">Registrarse</div>
+    </div>
+    <div class="auth-panel active" id="panL">
+      <div class="field"><label>Email</label><input id="lEmail" type="email" placeholder="tu@email.com" autocomplete="email"></div>
+      <div class="field"><label>Contraseña</label><input id="lPass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn-main" onclick="Auth.emailLogin()">ENTRAR</button>
+      <div class="divider">o</div>
+      <button class="btn-google" onclick="Auth.googleLogin()">
+        <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Google
+      </button>
+      <div class="auth-switch">¿No tienes cuenta? <a onclick="Auth.tab('register')">Regístrate</a></div>
+    </div>
+    <div class="auth-panel" id="panR">
+      <div class="field"><label>Nombre</label><input id="rName" type="text" placeholder="Tu nombre gamer" autocomplete="name"></div>
+      <div class="field"><label>Email</label><input id="rEmail" type="email" placeholder="tu@email.com" autocomplete="email"></div>
+      <div class="field"><label>Contraseña</label><input id="rPass" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+      <button class="btn-main" onclick="Auth.emailRegister()">CREAR CUENTA</button>
+      <div class="divider">o</div>
+      <button class="btn-google" onclick="Auth.googleLogin()">
+        <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Google
+      </button>
+      <div class="auth-switch">¿Ya tienes cuenta? <a onclick="Auth.tab('login')">Inicia sesión</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PREFS ════ -->
+<div id="prefsScreen" class="screen">
+  <div class="top-nav"><div class="nav-logo">SBSwipers</div><div id="prefStep" style="font-size:.52rem;letter-spacing:.26em;color:var(--muted2);">PASO 1 DE 4</div></div>
+  <div class="prefs-bar-wrap"><div class="prefs-bar" id="pBar" style="width:25%"></div></div>
+  <div class="prefs-scroll">
+    <div class="pref-step active" id="ps1">
+      <div class="pstep-lbl">Paso 1</div><div class="pstep-title">¿Qué géneros<br>te apasionan?</div><div class="pstep-sub">Selecciona todos los que quieras</div>
+      <div class="tags-wrap" id="tg-genres">
+        <span class="tag" data-v="action">Acción</span><span class="tag" data-v="rpg">RPG</span><span class="tag" data-v="adventure">Aventura</span><span class="tag" data-v="horror">Horror</span><span class="tag" data-v="shooter">FPS / TPS</span><span class="tag" data-v="strategy">Estrategia</span><span class="tag" data-v="simulation">Simulación</span><span class="tag" data-v="sports">Deportes</span><span class="tag" data-v="indie">Indie</span><span class="tag" data-v="open-world">Mundo Abierto</span><span class="tag" data-v="platformer">Plataformas</span><span class="tag" data-v="fighting">Lucha</span><span class="tag" data-v="racing">Carreras</span><span class="tag" data-v="battle-royale">Battle Royale</span><span class="tag" data-v="stealth">Stealth</span><span class="tag" data-v="puzzle">Puzzle</span><span class="tag" data-v="roguelike">Roguelike</span><span class="tag" data-v="mmorpg">MMORPG</span>
+      </div>
+      <div class="pref-nav"><span></span><button class="btn-filled" onclick="P.go(2)">SIGUIENTE →</button></div>
+    </div>
+    <div class="pref-step" id="ps2">
+      <div class="pstep-lbl">Paso 2</div><div class="pstep-title">Tu estilo<br>de juego</div><div class="pstep-sub">¿Cómo sueles jugar?</div>
+      <div class="tags-wrap" id="tg-style">
+        <span class="tag" data-v="story">Historia & Narrativa</span><span class="tag" data-v="competitive">Competitivo</span><span class="tag" data-v="co-op">Cooperativo</span><span class="tag" data-v="completionist">Completista 100%</span><span class="tag" data-v="speedrun">Speedrunner</span><span class="tag" data-v="casual">Casual</span><span class="tag" data-v="hardcore">Hardcore</span><span class="tag" data-v="explorer">Explorador</span><span class="tag" data-v="crafting">Crafting & Build</span><span class="tag" data-v="solo">Solo</span><span class="tag" data-v="social">Social / Online</span>
+      </div>
+      <div class="pref-nav"><button class="btn-ghost" onclick="P.go(1)">← ATRÁS</button><button class="btn-filled" onclick="P.go(3)">SIGUIENTE →</button></div>
+    </div>
+    <div class="pref-step" id="ps3">
+      <div class="pstep-lbl">Paso 3</div><div class="pstep-title">¿Qué estudios<br>te inspiran?</div><div class="pstep-sub">Desarrolladoras favoritas</div>
+      <div class="tags-wrap" id="tg-studios">
+        <span class="tag" data-v="fromsoftware">FromSoftware</span><span class="tag" data-v="naughty-dog">Naughty Dog</span><span class="tag" data-v="rockstar">Rockstar Games</span><span class="tag" data-v="cd-projekt">CD Projekt RED</span><span class="tag" data-v="nintendo">Nintendo</span><span class="tag" data-v="bethesda">Bethesda</span><span class="tag" data-v="capcom">Capcom</span><span class="tag" data-v="square-enix">Square Enix</span><span class="tag" data-v="insomniac">Insomniac</span><span class="tag" data-v="santa-monica">Santa Monica</span><span class="tag" data-v="valve">Valve</span><span class="tag" data-v="supergiant">Supergiant</span><span class="tag" data-v="larian">Larian Studios</span><span class="tag" data-v="remedy">Remedy</span><span class="tag" data-v="kojima">Kojima Productions</span>
+      </div>
+      <div class="pref-nav"><button class="btn-ghost" onclick="P.go(2)">← ATRÁS</button><button class="btn-filled" onclick="P.go(4)">SIGUIENTE →</button></div>
+    </div>
+    <div class="pref-step" id="ps4">
+      <div class="pstep-lbl">Paso 4</div><div class="pstep-title">¿Dónde<br>juegas?</div><div class="pstep-sub">Plataformas preferidas</div>
+      <div class="tags-wrap" id="tg-platforms">
+        <span class="tag" data-v="playstation5">PlayStation 5</span><span class="tag" data-v="playstation4">PlayStation 4</span><span class="tag" data-v="xbox-series-x">Xbox Series X|S</span><span class="tag" data-v="nintendo-switch">Nintendo Switch</span><span class="tag" data-v="pc">PC (Steam)</span><span class="tag" data-v="pc">PC (Epic)</span><span class="tag" data-v="android">Mobile (Android)</span><span class="tag" data-v="ios">Mobile (iOS)</span><span class="tag" data-v="vr">VR / Meta Quest</span>
+      </div>
+      <div class="pref-nav"><button class="btn-ghost" onclick="P.go(3)">← ATRÁS</button><button class="btn-filled" onclick="P.finish()">EMPEZAR →</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MAIN ════ -->
+<div id="mainScreen" class="screen">
+  <div class="top-nav">
+    <div class="nav-logo">SBSwipers</div>
+    <div class="nav-tabs">
+      <div class="nav-tab active" id="dt-swipe" onclick="Nav.go('swipe')">Descubrir</div>
+      <div class="nav-tab" id="dt-matches" onclick="Nav.go('matches')">Matches <span id="mBadgeTop" style="display:none;margin-left:5px;background:var(--accent);color:var(--bg);border-radius:10px;padding:1px 6px;font-size:.44rem;"></span></div>
+      <div class="nav-tab" id="dt-profile" onclick="Nav.go('profile')">Perfil</div>
+    </div>
+    <div class="nav-right"><div class="nav-avatar" id="navAv" onclick="Nav.go('profile')"></div></div>
+  </div>
+
+  <!-- SWIPE -->
+  <div id="swipeTab" class="tab-screen active">
+    <div class="swipe-area">
+      <div class="card-stack" id="cardStack"></div>
+    </div>
+    <div class="action-row">
+      <button class="act nope" onclick="Swipe.left()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button class="act sup" onclick="Swipe.super_()"><svg viewBox="0 0 24 24" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+      <button class="act like" onclick="Swipe.right()"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+    </div>
+  </div>
+
+  <!-- MATCHES -->
+  <div id="matchesTab" class="tab-screen">
+    <div class="tab-hd">Tus Matches</div>
+    <div class="tab-sub">Juegos que conquistaron tu corazón</div>
+    <div id="mGrid" class="matches-grid"></div>
+    <div id="noM" class="no-m" style="display:none;"><div class="no-m-ico">🎮</div><div class="no-m-txt">Aún no tienes matches</div></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="profileTab" class="tab-screen">
+    <div class="profile-wrap">
+      <div class="p-hero">
+        <div class="p-av-wrap">
+          <div id="pAvCont"></div>
+          <div class="p-edit" onclick="document.getElementById('photoIn').click()">✎</div>
+          <input type="file" id="photoIn" accept="image/*" style="display:none" onchange="Profile.changePhoto(this)">
+        </div>
+        <div class="p-hero-info">
+          <div class="p-name" id="pName">—</div>
+          <div class="p-email" id="pEmail">—</div>
+          <div class="p-stats">
+            <div class="p-stat"><div class="num" id="pSM">0</div><div class="lbl">Matches</div></div>
+            <div class="p-stat"><div class="num" id="pSS">0</div><div class="lbl">Vistos</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="p-section">
+        <div class="p-sec-title">Información</div>
+        <div class="fgroup"><label class="flbl">Nombre</label><input id="iName" class="finput" type="text" placeholder="Tu nombre gamer"></div>
+        <div class="fgroup"><label class="flbl">PSN ID</label><input id="iPSN" class="finput" type="text" placeholder="TuPSNID"></div>
+        <div class="fgroup"><label class="flbl">Bio</label><textarea id="iBio" class="finput" placeholder="Cuéntanos sobre ti…"></textarea></div>
+        <div class="p-actions">
+          <button class="btn-save" onclick="Profile.save()">GUARDAR</button>
+          <button class="btn-out" onclick="Auth.logout()">Cerrar sesión</button>
+        </div>
+      </div>
+      <div class="p-section">
+        <div class="p-sec-title">Preferencias guardadas</div>
+        <div class="fgroup"><label class="flbl">Géneros</label><div id="pGenres" class="ptag-row"></div></div>
+        <div class="fgroup"><label class="flbl">Plataformas</label><div id="pPlats" class="ptag-row"></div></div>
+        <button class="btn-out" style="font-size:.52rem;padding:9px 16px;" onclick="App.rePrefs()">Cambiar preferencias</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bot-nav">
+    <div class="bot-inner">
+      <div class="bot-tab active" id="bt-swipe" onclick="Nav.go('swipe')">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span>Descubrir</span>
+      </div>
+      <div class="bot-tab" id="bt-matches" onclick="Nav.go('matches')" style="position:relative;">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span>Matches</span>
+        <div class="bot-badge" id="mBadgeBot"></div>
+      </div>
+      <div class="bot-tab" id="bt-profile" onclick="Nav.go('profile')">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Perfil</span>
+      </div>
+    </div>
+  </nav>
+</div>
+</div><!-- /app -->
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+
+const fApp=initializeApp(CONFIG.FIREBASE);
+const auth=getAuth(fApp), db=getFirestore(fApp), sto=getStorage(fApp);
+
+let user=null, ud={}, queue=[], seen=new Set(), page=1, fetching=false;
+let swipeActive=false, flying=false;
+
+// ── utils ──
+function toast(msg,d=2600){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),d);}
+function showScreen(id){document.querySelectorAll('#app>.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showMain(){
+  showScreen('mainScreen');
+  document.querySelectorAll('.tab-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('swipeTab').classList.add('active');
+  ['dt-swipe','bt-swipe'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('active');});
+  ['dt-matches','bt-matches','dt-profile','bt-profile'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('active');});
+  swipeActive=true;
+}
+
+// ── RAWG ──
+const RAWG=`https://api.rawg.io/api`;
+async function rawgFetch(p=1){
+  const genres=(ud.prefs?.genres||['action','rpg']).join(',');
+  const url=`${RAWG}/games?key=${CONFIG.RAWG_KEY}&page=${p}&page_size=20&genres=${genres}&ordering=-rating&metacritic=60,100`;
+  try{const r=await fetch(url);const d=await r.json();return(d.results||[]).filter(g=>g.background_image&&!seen.has(g.id));}
+  catch(e){console.error(e);return[];}
+}
+async function rawgDetail(slug){
+  try{
+    const [detail, trailers, screenshots] = await Promise.all([
+      fetch(`${RAWG}/games/${slug}?key=${CONFIG.RAWG_KEY}`).then(r=>r.json()),
+      fetch(`${RAWG}/games/${slug}/movies?key=${CONFIG.RAWG_KEY}`).then(r=>r.json()),
+      fetch(`${RAWG}/games/${slug}/screenshots?key=${CONFIG.RAWG_KEY}`).then(r=>r.json()),
+    ]);
+    return { detail, trailers: trailers.results||[], screenshots: screenshots.results||[] };
+  }catch(e){console.error(e);return null;}
+}
+async function loadMore(){if(fetching)return;fetching=true;page++;const g=await rawgFetch(page);g.forEach(x=>{queue.push(x);seen.add(x.id);});fetching=false;}
+
+// ── AUTH ──
+window.Auth={
+  tab(t){
+    document.querySelectorAll('.auth-tab').forEach(e=>e.classList.remove('active'));
+    document.querySelectorAll('.auth-panel').forEach(e=>e.classList.remove('active'));
+    document.getElementById(t==='login'?'atL':'atR').classList.add('active');
+    document.getElementById(t==='login'?'panL':'panR').classList.add('active');
+  },
+  async emailLogin(){
+    const email=document.getElementById('lEmail').value.trim(), pass=document.getElementById('lPass').value;
+    if(!email||!pass){toast('Completa todos los campos');return;}
+    try{await signInWithEmailAndPassword(auth,email,pass);}
+    catch(e){const m={'auth/invalid-credential':'Email o contraseña incorrectos','auth/user-not-found':'No existe esa cuenta','auth/wrong-password':'Contraseña incorrecta','auth/too-many-requests':'Demasiados intentos'};toast(m[e.code]||'Error: '+e.message);}
+  },
+  async emailRegister(){
+    const name=document.getElementById('rName').value.trim(), email=document.getElementById('rEmail').value.trim(), pass=document.getElementById('rPass').value;
+    if(!name||!email||!pass){toast('Completa todos los campos');return;}
+    if(pass.length<6){toast('Mínimo 6 caracteres en la contraseña');return;}
+    try{const c=await createUserWithEmailAndPassword(auth,email,pass);await updateProfile(c.user,{displayName:name});}
+    catch(e){const m={'auth/email-already-in-use':'Email ya registrado','auth/invalid-email':'Email inválido','auth/weak-password':'Contraseña débil'};toast(m[e.code]||'Error: '+e.message);}
+  },
+  async googleLogin(){try{await signInWithPopup(auth,new GoogleAuthProvider());}catch(e){toast('Error Google: '+e.message);}},
+  async logout(){await signOut(auth);}
+};
+
+onAuthStateChanged(auth,async u=>{
+  document.getElementById('loader').classList.add('gone');
+  if(!u){user=null;ud={};swipeActive=false;showScreen('loginScreen');return;}
+  user=u;
+  const ref=doc(db,'users',u.uid), snap=await getDoc(ref);
+  ud=snap.exists()?snap.data():{displayName:u.displayName||'',email:u.email||'',photoURL:u.photoURL||'',bio:'',psnId:'',prefs:{genres:[],platforms:[],studios:[],style:[]},matches:[],swipedCount:0};
+  if(!snap.exists())await setDoc(ref,ud);
+  setNavAv();updateBadge();
+  if(!(ud.prefs?.genres?.length>0)){showScreen('prefsScreen');}
+  else{showMain();await Swipe.init();}
+});
+
+function setNavAv(){const el=document.getElementById('navAv'),p=ud.photoURL||user?.photoURL;if(p)el.innerHTML=`<img src="${p}" alt="">`;else el.textContent=(ud.displayName||user?.displayName||'?')[0]?.toUpperCase()||'?';}
+function updateBadge(){
+  const n=(ud.matches||[]).length;
+  const bt=document.getElementById('mBadgeTop'),bb=document.getElementById('mBadgeBot');
+  if(n>0){if(bt){bt.style.display='inline';bt.textContent=n;}if(bb){bb.style.display='block';bb.textContent=n;}}
+  else{if(bt)bt.style.display='none';if(bb)bb.style.display='none';}
+}
+
+// ── NAV ──
+window.Nav={
+  go(tab){
+    const tm={swipe:'swipeTab',matches:'matchesTab',profile:'profileTab'};
+    const dm={swipe:'dt-swipe',matches:'dt-matches',profile:'dt-profile'};
+    const bm={swipe:'bt-swipe',matches:'bt-matches',profile:'bt-profile'};
+    document.querySelectorAll('.tab-screen').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.nav-tab,.bot-tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById(tm[tab]).classList.add('active');
+    document.getElementById(dm[tab])?.classList.add('active');
+    document.getElementById(bm[tab])?.classList.add('active');
+    swipeActive=tab==='swipe';
+    if(tab==='matches')Matches.render();
+    if(tab==='profile')Profile.render();
+  }
+};
+
+// ── PREFS ──
+let pStep=1;
+document.querySelectorAll('.tag').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+window.P={
+  go(s){document.getElementById('ps'+pStep).classList.remove('active');pStep=s;document.getElementById('ps'+s).classList.add('active');document.getElementById('pBar').style.width=(s/4*100)+'%';document.getElementById('prefStep').textContent=`PASO ${s} DE 4`;document.querySelector('.prefs-scroll').scrollTop=0;},
+  async finish(){const get=id=>[...document.querySelectorAll(`#${id} .tag.on`)].map(t=>t.dataset.v);ud.prefs={genres:get('tg-genres'),style:get('tg-style'),studios:get('tg-studios'),platforms:get('tg-platforms')};await updateDoc(doc(db,'users',user.uid),{prefs:ud.prefs});showMain();await Swipe.init();}
+};
+
+// ── SWIPE ──
+let drag=false,sx=0,ox=0,ac=null;
+window.Swipe={
+  async init(){queue=[];seen=new Set();page=1;flying=false;const g=await rawgFetch(1);g.forEach(x=>{queue.push(x);seen.add(x.id);});this.render();},
+  render(){
+    const stack=document.getElementById('cardStack');stack.innerHTML='';
+    if(!queue.length){stack.innerHTML=`<div class="empty-s"><div class="big">✓</div><p>Has visto todos los juegos</p><button class="btn-reload" onclick="Swipe.init()">Recargar</button></div>`;return;}
+    queue.slice(0,3).reverse().forEach((g,i)=>{const c=mkCard(g);c.classList.add(i===0?'c3':i===1?'c2':'c1');stack.appendChild(c);});
+    bindDrag(stack.lastElementChild);
+  },
+  left(){if(!flying)doFly('left');},
+  right(){if(!flying)doFly('right');},
+  super_(){if(!flying)doFly('super');}
+};
+
+function mkCard(g){
+  const el=document.createElement('div');
+  el.className='game-card';
+  el.dataset.id=g.id;el.dataset.name=g.name;el.dataset.img=g.background_image||'';el.dataset.slug=g.slug||'';
+  const genre=g.genres?.[0]?.name||'Videojuego';
+  const stars=g.rating?'★'.repeat(Math.min(Math.round(g.rating),5)):'';
+  el.innerHTML=`
+    <img class="card-img" src="${g.background_image||''}" alt="${g.name}" loading="lazy"
+      onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+    <div class="card-ph" style="display:none">🎮</div>
+    <div class="stamp sl">LIKE</div><div class="stamp sn">NOPE</div><div class="stamp ss">SUPER</div>
+    <div class="card-body">
+      <div class="card-genre">${genre}</div>
+      <div class="card-title">${g.name}</div>
+      <div class="card-meta">${g.released||''}</div>
+      <div class="card-stars">${stars}<span style="font-size:.52rem;color:var(--muted2);margin-left:4px;font-family:'Montserrat'">${g.rating||''}</span></div>
+    </div>
+    <div class="card-info-btn" onclick="Detail.open(event,'${g.slug||g.id}')">ℹ</div>`;
+  return el;
+}
+
+function bindDrag(card){
+  if(!card)return;
+  card.addEventListener('mousedown',ds,{passive:false});
+  card.addEventListener('touchstart',ds,{passive:true});
+}
+function ds(e){
+  if(flying)return;
+  const target=e.target;if(target.classList.contains('card-info-btn'))return;
+  ac=e.currentTarget;drag=true;ac.classList.add('dragging');
+  sx=e.clientX||e.touches[0].clientX;ox=0;
+  document.addEventListener('mousemove',dm,{passive:false});
+  document.addEventListener('touchmove',dm,{passive:false});
+  document.addEventListener('mouseup',de);document.addEventListener('touchend',de);
+}
+function dm(e){
+  if(!drag||!ac)return;if(e.cancelable)e.preventDefault();
+  ox=(e.clientX||e.touches[0].clientX)-sx;
+  ac.style.transform=`translateX(${ox}px) rotate(${ox*0.07}deg)`;
+  const lk=ac.querySelector('.sl'),np=ac.querySelector('.sn');
+  if(ox>40){lk.style.opacity=Math.min((ox-40)/80,1);np.style.opacity=0;}
+  else if(ox<-40){np.style.opacity=Math.min((-ox-40)/80,1);lk.style.opacity=0;}
+  else{lk.style.opacity=0;np.style.opacity=0;}
+}
+function de(){
+  if(!drag)return;drag=false;
+  document.removeEventListener('mousemove',dm);document.removeEventListener('touchmove',dm);
+  document.removeEventListener('mouseup',de);document.removeEventListener('touchend',de);
+  if(!ac)return;ac.classList.remove('dragging');
+  if(ox>80)doFly('right');else if(ox<-80)doFly('left');
+  else{ac.style.transform='';ac.querySelectorAll('.stamp').forEach(s=>s.style.opacity=0);}
+  ac=null;ox=0;
+}
+async function doFly(dir){
+  if(flying)return;
+  const stack=document.getElementById('cardStack'),top=stack.lastElementChild;
+  if(!top||top.classList.contains('empty-s'))return;
+  flying=true;
+  const gd={id:+top.dataset.id,name:top.dataset.name,img:top.dataset.img};
+  if(dir==='super')top.querySelector('.ss').style.opacity=1;
+  top.classList.add(dir==='right'?'fly-r':dir==='left'?'fly-l':'fly-u');
+  ud.swipedCount=(ud.swipedCount||0)+1;
+  updateDoc(doc(db,'users',user.uid),{swipedCount:ud.swipedCount});
+  if(dir!=='left'){await saveMatch(gd,dir==='super');if(swipeActive)App.show(gd,dir==='super');}
+  setTimeout(()=>{
+    top.remove();queue.shift();flying=false;
+    if(queue.length>=3){const nc=mkCard(queue[2]);nc.classList.add('c3');stack.insertBefore(nc,stack.firstChild);}
+    if(queue.length<=5)loadMore();
+    if(!queue.length){stack.innerHTML=`<div class="empty-s"><div class="big">✓</div><p>Has visto todos los juegos</p><button class="btn-reload" onclick="Swipe.init()">Recargar</button></div>`;return;}
+    const nt=stack.lastElementChild;
+    if(nt&&!nt.classList.contains('empty-s')){nt.className='game-card c1';bindDrag(nt);}
+  },460);
+}
+async function saveMatch(g,isSuper){
+  const m={id:g.id,name:g.name,img:g.img,super:isSuper,ts:Date.now()};
+  ud.matches=ud.matches||[];ud.matches.push(m);
+  await updateDoc(doc(db,'users',user.uid),{matches:arrayUnion(m)});
+  updateBadge();
+}
+
+// ── DETAIL PANEL ──
+let currentDetailSlug = null;
+window.Detail={
+  async open(e, slugOrId){
+    e.stopPropagation();
+    const panel=document.getElementById('detailPanel');
+    const scroll=document.getElementById('detailScroll');
+    scroll.innerHTML=`<div style="padding:60px 0;text-align:center;"><div class="ld-logo" style="font-size:1.4rem;">Cargando…</div></div>`;
+    panel.classList.add('open');
+    currentDetailSlug=slugOrId;
+    const data=await rawgDetail(slugOrId);
+    if(!data){scroll.innerHTML=`<p style="padding:40px;color:var(--muted);font-size:.7rem;">No se pudo cargar la información.</p>`;return;}
+    const {detail, trailers}=data;
+    // clean description (strip html tags)
+    const rawDesc=detail.description_raw||detail.description||'Sin descripción disponible.';
+    const desc=rawDesc.replace(/<[^>]*>/g,'').substring(0,600)+(rawDesc.length>600?'…':'');
+    // platforms
+    const plats=(detail.platforms||[]).map(p=>p.platform.name);
+    const userPlats=ud.prefs?.platforms||[];
+    const platHTML=plats.map(p=>{
+      const isUser=userPlats.some(up=>p.toLowerCase().includes(up.replace(/-/g,' ')));
+      return `<div class="d-plat${isUser?' highlight':''}">${p}</div>`;
+    }).join('');
+    // reviews — use metacritic + rawg rating + ratings breakdown
+    const mc=detail.metacritic;
+    const rawgRating=detail.rating;
+    const ratingTop=detail.rating_top||5;
+    const mcClass=mc>=90?'score-great':mc>=75?'score-good':mc>=60?'score-mid':'score-low';
+    const rgClass=rawgRating>=4.5?'score-great':rawgRating>=3.5?'score-good':rawgRating>=2.5?'score-mid':'score-low';
+    const metacriticPlatforms=detail.metacritic_platforms||[];
+
+    let reviewsHTML='';
+    // Metacritic score
+    if(mc){
+      reviewsHTML+=`
+        <div class="d-review">
+          <div class="d-review-logo">Metacritic</div>
+          <div class="d-review-score-wrap">
+            <div class="d-review-bar-bg"><div class="d-review-bar" style="width:${mc}%;background:${mc>=90?'var(--like)':mc>=75?'var(--accent)':mc>=60?'#f59e0b':'var(--nope)'}"></div></div>
+            <div class="d-review-meta">Crítica profesional · ${detail.ratings_count||0} reseñas</div>
+          </div>
+          <div class="d-review-num ${mcClass}">${mc}</div>
+        </div>`;
+    }
+    // RAWG community score
+    if(rawgRating){
+      const rawgPct=Math.round((rawgRating/ratingTop)*100);
+      reviewsHTML+=`
+        <div class="d-review">
+          <div class="d-review-logo">RAWG</div>
+          <div class="d-review-score-wrap">
+            <div class="d-review-bar-bg"><div class="d-review-bar" style="width:${rawgPct}%;background:${rawgPct>=90?'var(--like)':rawgPct>=70?'var(--accent)':rawgPct>=50?'#f59e0b':'var(--nope)'}"></div></div>
+            <div class="d-review-meta">Comunidad · ${detail.reviews_count||detail.ratings_count||0} valoraciones</div>
+          </div>
+          <div class="d-review-num ${rgClass}">${rawgRating.toFixed(1)}</div>
+        </div>`;
+    }
+    // Ratings breakdown (Exceptional / Recommended / Meh / Skip)
+    const ratings=detail.ratings||[];
+    ratings.forEach(r=>{
+      const pct=Math.round((r.count/Math.max(detail.ratings_count,1))*100);
+      const color=r.title==='exceptional'?'var(--like)':r.title==='recommended'?'var(--accent)':r.title==='meh'?'#f59e0b':'var(--nope)';
+      const label={'exceptional':'Excepcional','recommended':'Recomendado','meh':'Meh','skip':'Saltarse'}[r.title]||r.title;
+      if(r.count>0) reviewsHTML+=`
+        <div class="d-review">
+          <div class="d-review-logo" style="font-size:.52rem;color:var(--muted2);">${label}</div>
+          <div class="d-review-score-wrap">
+            <div class="d-review-bar-bg"><div class="d-review-bar" style="width:${pct}%;background:${color}"></div></div>
+            <div class="d-review-meta">${r.count} jugadores · ${pct}%</div>
+          </div>
+          <div class="d-review-num" style="font-size:1rem;color:${color}">${pct}%</div>
+        </div>`;
+    });
+    if(!reviewsHTML) reviewsHTML=`<p style="font-size:.62rem;color:var(--muted);padding:10px 0;">Sin reseñas disponibles aún.</p>`;
+
+    // trailer — RAWG gives direct mp4 or we search YouTube
+    let trailerHTML='';
+    if(trailers.length>0){
+      const t=trailers[0];
+      const videoUrl=t.data?.max||t.data?.['480']||t.preview||'';
+      if(videoUrl){
+        trailerHTML=`<div class="d-trailer-wrap"><video controls preload="none" poster="${t.preview||''}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"><source src="${videoUrl}" type="video/mp4">Tu navegador no soporta vídeo.</video></div>`;
+      }
+    }
+    // fallback: YouTube embed search
+    if(!trailerHTML){
+      const query=encodeURIComponent(`${detail.name} official trailer`);
+      const ytSearch=`https://www.youtube.com/results?search_query=${query}`;
+      trailerHTML=`<div style="margin-bottom:24px;">
+        <a href="${ytSearch}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface2);border:1px solid var(--border2);text-decoration:none;color:var(--white);transition:border-color .2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--nope)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="var(--nope)" stroke="none"/></svg>
+          <div><div style="font-size:.65rem;letter-spacing:.15em;margin-bottom:3px;">Ver trailer en YouTube</div><div style="font-size:.52rem;color:var(--muted2);letter-spacing:.1em;">${detail.name}</div></div>
+        </a>
+      </div>`;
+    }
+
+    // Stores / websites
+    const stores=(detail.stores||[]).map(s=>`<a href="${s.url||'#'}" target="_blank" rel="noopener" style="padding:5px 12px;border:1px solid var(--border2);font-size:.52rem;letter-spacing:.1em;color:var(--muted2);text-decoration:none;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--muted2)'">${s.store.name}</a>`).join('');
+
+    scroll.innerHTML=`
+      <div class="d-hero">
+        <img src="${detail.background_image||''}" alt="${detail.name}">
+        <div class="d-hero-overlay"></div>
+        <div class="d-close" onclick="Detail.close()">✕</div>
+      </div>
+      <div class="d-genre">${(detail.genres||[]).map(g=>g.name).join(' · ')}</div>
+      <div class="d-title">${detail.name}</div>
+
+      ${plats.length?`<div class="d-section-title" style="margin-top:16px;">Plataformas disponibles</div><div class="d-platforms">${platHTML}</div>`:''}
+
+      <div class="d-section-title">Descripción</div>
+      <div class="d-desc">${desc}</div>
+
+      <div class="d-section-title">Trailer</div>
+      ${trailerHTML}
+
+      <div class="d-section-title">Reseñas y puntuaciones</div>
+      <div class="d-reviews">${reviewsHTML}</div>
+
+      ${stores?`<div class="d-section-title">Disponible en</div><div class="d-platforms" style="margin-bottom:24px;">${stores}</div>`:''}
+
+      <div class="d-actions">
+        <button class="d-act-nope" onclick="Detail.swipeFromDetail('left')">✕ Pasar</button>
+        <button class="d-act-like" onclick="Detail.swipeFromDetail('right')">♥ Me interesa</button>
+      </div>`;
+
+    // animate bars after render
+    setTimeout(()=>{
+      scroll.querySelectorAll('.d-review-bar').forEach(b=>{const w=b.style.width;b.style.width='0';setTimeout(()=>b.style.width=w,50);});
+    },100);
+  },
+  close(){
+    document.getElementById('detailPanel').classList.remove('open');
+    currentDetailSlug=null;
+  },
+  swipeFromDetail(dir){
+    this.close();
+    setTimeout(()=>{if(dir==='right')Swipe.right();else Swipe.left();},300);
+  }
+};
+
+// ── APP ──
+window.App={
+  show(g,sup){
+    document.getElementById('mName').textContent=g.name;
+    document.getElementById('mImg').src=g.img;
+    document.getElementById('mSuper').style.display=sup?'block':'none';
+    document.getElementById('matchOv').classList.add('show');
+  },
+  dismiss(){document.getElementById('matchOv').classList.remove('show');},
+  rePrefs(){showScreen('prefsScreen');}
+};
+
+// ── MATCHES ──
+window.Matches={
+  render(){
+    const grid=document.getElementById('mGrid'),empty=document.getElementById('noM'),list=ud.matches||[];
+    if(!list.length){grid.style.display='none';empty.style.display='block';return;}
+    empty.style.display='none';grid.style.display='grid';
+    grid.innerHTML=list.slice().reverse().map(m=>`
+      <div class="mwrap">
+        <div class="mcard">
+          <img class="mcard-img" src="${m.img}" alt="${m.name}" loading="lazy">
+          <div class="mcard-info">
+            <div class="mcard-name">${m.name}</div>
+            <div class="mcard-lbl ${m.super?'s':'l'}">${m.super?'⭐ Super Like':'♥ Match'}</div>
+          </div>
+        </div>
+        ${m.super?'<div class="mcard-star">⭐</div>':''}
+      </div>`).join('');
+  }
+};
+
+// ── PROFILE ──
+window.Profile={
+  render(){
+    const photo=ud.photoURL||user?.photoURL||'';
+    const cont=document.getElementById('pAvCont');
+    if(photo)cont.innerHTML=`<img class="p-av" src="${photo}" alt="">`;
+    else cont.innerHTML=`<div class="p-av-ph">${(ud.displayName||user?.displayName||'?')[0]?.toUpperCase()||'?'}</div>`;
+    document.getElementById('pName').textContent=ud.displayName||user?.displayName||'—';
+    document.getElementById('pEmail').textContent=ud.email||user?.email||'—';
+    document.getElementById('iName').value=ud.displayName||user?.displayName||'';
+    document.getElementById('iPSN').value=ud.psnId||'';
+    document.getElementById('iBio').value=ud.bio||'';
+    document.getElementById('pSM').textContent=(ud.matches||[]).length;
+    document.getElementById('pSS').textContent=ud.swipedCount||0;
+    document.getElementById('pGenres').innerHTML=(ud.prefs?.genres||[]).map(g=>`<div class="ptag">${g}</div>`).join('');
+    document.getElementById('pPlats').innerHTML=(ud.prefs?.platforms||[]).map(g=>`<div class="ptag">${g}</div>`).join('');
+  },
+  async save(){
+    const n=document.getElementById('iName').value.trim(),p=document.getElementById('iPSN').value.trim(),b=document.getElementById('iBio').value.trim();
+    ud.displayName=n;ud.psnId=p;ud.bio=b;
+    await updateDoc(doc(db,'users',user.uid),{displayName:n,psnId:p,bio:b});
+    document.getElementById('pName').textContent=n||'—';setNavAv();toast('✓ Perfil guardado');
+  },
+  async changePhoto(input){
+    const file=input.files[0];if(!file)return;toast('Subiendo foto…');
+    const r=sRef(sto,`avatars/${user.uid}`);await uploadBytes(r,file);
+    const url=await getDownloadURL(r);ud.photoURL=url;
+    await updateDoc(doc(db,'users',user.uid),{photoURL:url});
+    this.render();setNavAv();toast('✓ Foto actualizada');
+  }
+};
+</script>
+</body>
+</html>
